@@ -1,0 +1,23 @@
+{
+  "__symbolic": "module",
+  "version": 1,
+  "metadata": {
+    "DataPool": {
+      "__symbolic": "class",
+      "members": {
+        "__ctor__": [
+          {
+            "__symbolic": "constructor",
+            "parameters": [
+              {
+                "__symbolic": "reference",
+                "module": "emiya-angular2-fetch",
+                "name": "Fetch"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
