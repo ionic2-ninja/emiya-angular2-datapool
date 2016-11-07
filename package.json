@@ -1,0 +1,45 @@
+{
+  "name": "emiya-angular2-datapool",
+  "version": "1.0.0",
+  "description": "An datapool for angular2",
+  "main": "index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "emiya-js-utils": ">=1.0.0",
+    "emiya-angular2-event": ">=1.0.0",
+    "emiya-angular2-token": ">=1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ionic2-ninja/emiya-angular2-datapool.git"
+  },
+  "keywords": [
+    "angular2",
+    "ionic2",
+    "js",
+    "javascript",
+    "es6",
+    "data",
+    "datapool",
+    "http",
+    "https",
+    "request",
+    "fetch",
+    "network",
+    "api",
+    "interface",
+    "get",
+    "post",
+    "put",
+    "delete",
+    "restful"
+  ],
+  "author": "emiyalee",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ionic2-ninja/emiya-angular2-datapool/issues"
+  },
+  "homepage": "https://github.com/ionic2-ninja/emiya-angular2-datapool#readme"
+}
