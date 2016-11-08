@@ -9,10 +9,10 @@ npm install --save emiya-angular2-datapool
 ## Features
 
 * provide api to fetch data from remote address or local variable/promise
-* provide api to manage data include(refresh/cache/destroy/update/notification)
+* provide api to manage data (refresh/cache/destroy/update/notification)
 
 
-### datapool usage
+### Usage
 
 ```
 import {DataPool} from "emiya-angular";
@@ -27,7 +27,7 @@ constructor(platform: Platform, datapool: DataPool,) {
     
     //datapool 0 with fetching data from remote address
     var config0 = {
-        id: '0',
+        id: '0',   //identity for datapool
         bind_tokens: ['uuid', 'token'],  //default is null,setting this means the datapool can only be accessed when token(uuid&token) exists 
         bind_tokens_method: ['local', 'local'], //use together with option bind_token to specify token source,option is local or session,default is local
         period: 3600, //the survival time from cached data,the unit is sec,value<0 means never expired.Once expired，the datapool will try to re-fetch data from sources.
@@ -136,6 +136,38 @@ constructor(platform: Platform, datapool: DataPool,) {
   }
 }
 ```
+
+#####datapool can also work with [emiya-angular2-fetch](https://github.com/ionic2-ninja/emiya-angular2-fetch),just replace request.url with the id you define in your fetch config.
+```
+datapool.load({
+ id:"another",
+ request:{url:'full'}
+})
+```
+
+
+### How to set and delete token
+
+```
+import {Router} from 'emiya-angular2-token';
+
+export class TabsPage {
+
+constructor() {
+    //set tokon
+    Token.set('uuid','fasfasjfasjlk9312jkkfasjfaskl')
+    Token.set('token','fasfasjfasjlk9312jkkfasjfaskl')
+    //delete token
+    Token.delete('uuid')
+    Token.delete('token')
+    //check if token exists
+    Token.has('uuid')   //true or false
+    Token.has('token')
+  }
+}
+```
+#####more can be found [emiya-angular2-token](https://github.com/ionic2-ninja/emiya-angular2-token)
+
 
 ### Global status code
 
