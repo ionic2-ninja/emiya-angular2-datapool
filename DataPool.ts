@@ -55,7 +55,7 @@ export class DataPool {
                 }
             }
         }
-        this.onChange(this.updateLocalData(), null, false)
+        this.onChange(this.updateLocalData, null, false)
     }
 
     private updateLocalData = () => {

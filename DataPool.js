@@ -41,7 +41,7 @@ var DataPool = (function () {
                 }
             }
         }
-        this.onChange(this.updateLocalData(), null, false);
+        this.onChange(this.updateLocalData, null, false);
     }
     DataPool.prototype.load = function (config, overload) {
         if (overload === void 0) { overload = false; }
