@@ -28,6 +28,10 @@ var DataPool = (function () {
         this.event = emiya_angular2_Event_1.Event;
         this.utils = emiya_js_utils_1.Utils;
         this.token = emiya_angular2_token_1.Token;
+        this.updateLocalData = function () {
+            window.localStorage['dataPool'] = JSON.stringify({ configs: _this.configs, infos: _this.infos });
+            //console.log('write',JSON.parse(window.localStorage['dataPool']))
+        };
         if (this.utils.notNullStrAndObj(window.localStorage['dataPool'])) {
             var parsed = JSON.parse(window.localStorage['dataPool']);
             if (this.utils.notNull(parsed['configs']) && (parsed['configs'] instanceof Array)) {
@@ -37,24 +41,21 @@ var DataPool = (function () {
                 }
             }
         }
-        this.onChange(function () {
-            window.localStorage['dataPool'] = JSON.stringify({ configs: _this.configs, infos: _this.infos });
-            //console.log('write',JSON.parse(window.localStorage['dataPool']))
-        }, null, false);
+        this.onChange(this.updateLocalData(), null, false);
     }
     DataPool.prototype.load = function (config, overload) {
         if (overload === void 0) { overload = false; }
         if (config instanceof Array) {
             //this.configs = [...this.configs, ...config]
             for (var c in config) {
-                this.unload(config[c].id, overload);
+                this.unload(config[c].id, overload, true);
                 if (this.utils.notNull(config[c].period))
                     config[c].period = 3600;
                 this.configs.push(config[c]);
             }
         }
         else {
-            this.unload(config.id, overload);
+            this.unload(config.id, overload, true);
             if (this.utils.notNull(config.period))
                 config.period = 3600;
             this.configs.push(config);
@@ -65,10 +66,22 @@ var DataPool = (function () {
             }
             this.enable = true;
         }
+        if (!this.configs || this.configs.length == 0) {
+            this.infos = [];
+            this.infos = [];
+            this.request_queue = [];
+            this.enable = false;
+            if (this.mon) {
+                this.mon.unsubscribe();
+                this.mon = null;
+            }
+        }
+        this.updateLocalData();
     };
-    DataPool.prototype.unload = function (id, overload) {
+    DataPool.prototype.unload = function (id, overload, skipConfigCheck) {
         if (id === void 0) { id = null; }
         if (overload === void 0) { overload = false; }
+        if (skipConfigCheck === void 0) { skipConfigCheck = false; }
         if (id == null) {
             this.configs = [];
         }
@@ -98,15 +111,18 @@ var DataPool = (function () {
             for (var c in id)
                 this.unload(id[c], overload);
         }
-        if (this.configs.length == 0) {
-            this.infos = [];
-            this.infos = [];
-            this.request_queue = [];
-            this.enable = false;
-            if (this.mon) {
-                this.mon.unsubscribe();
-                this.mon = null;
+        if (skipConfigCheck == false) {
+            if (this.configs.length == 0) {
+                this.infos = [];
+                this.infos = [];
+                this.request_queue = [];
+                this.enable = false;
+                if (this.mon) {
+                    this.mon.unsubscribe();
+                    this.mon = null;
+                }
             }
+            this.updateLocalData();
         }
     };
     DataPool.prototype.handler = function (ev, data) {
@@ -305,7 +321,9 @@ var DataPool = (function () {
             }
         }
     };
-    DataPool.prototype._handler = function (key, key2, resolve, reject, isRaw) {
+    DataPool.prototype._handler = function (key, key2, resolve, reject, isRaw, isPath) {
+        var _this = this;
+        if (isPath === void 0) { isPath = false; }
         var infos = this.infos, configs = this.configs, utils = this.utils, token = this.token, event = this.event, request_queue = this.request_queue, enable = this.enable;
         var config, method, _data, paths, index, flag = true;
         isRaw = utils.notNull(isRaw) ? isRaw : 'info';
@@ -477,10 +495,19 @@ var DataPool = (function () {
                         };
                         infos.push(_info);
                         if (utils.notNull(key2)) {
-                            if (utils.notNull(_info[isRaw]) && utils.notNull((_info[isRaw])[key2]))
-                                resolve(utils.deepCopy((_info[isRaw])[key2]));
-                            else
-                                reject(-10);
+                            if (isPath != false) {
+                                var result = _this.parseByPath(_info[isRaw], key2);
+                                if (result !== undefined)
+                                    resolve(utils.deepCopy(result));
+                                else
+                                    reject(-10);
+                            }
+                            else {
+                                if (utils.notNull(_info[isRaw]) && utils.notNull((_info[isRaw])[key2]))
+                                    resolve(utils.deepCopy((_info[isRaw])[key2]));
+                                else
+                                    reject(-10);
+                            }
                         }
                         else {
                             if (utils.notNull(_info[isRaw]))
@@ -488,7 +515,12 @@ var DataPool = (function () {
                             else
                                 reject(-9);
                         }
-                        event.emit('dataChanged', { action: 'renew', id: config.id, data: utils.deepCopy(_info), isRefresh: true });
+                        event.emit('dataChanged', {
+                            action: 'renew',
+                            id: config.id,
+                            data: utils.deepCopy(_info),
+                            isRefresh: true
+                        });
                     }
                     else {
                         reject(-2);
@@ -520,7 +552,9 @@ var DataPool = (function () {
         if (flag == true)
             reject(-7);
     };
-    DataPool.prototype._handler2 = function (key, key2, value, resolve, reject, isRemove, isRaw) {
+    DataPool.prototype._handler2 = function (key, key2, value, resolve, reject, isRemove, isRaw, isPath) {
+        var _this = this;
+        if (isPath === void 0) { isPath = false; }
         var infos = this.infos, configs = this.configs, utils = this.utils, token = this.token, event = this.event, request_queue = this.request_queue, enable = this.enable;
         var config, method, _data, paths, index, flag = true;
         isRaw = utils.notNull(isRaw) ? isRaw : 'info';
@@ -706,20 +740,43 @@ var DataPool = (function () {
                                 reject(-10);
                         }
                         else {
-                            if (utils.notNull(_info.raw)) {
+                            if (utils.notNull(key2))
+                                //if (utils.notNull(_info.raw)) {
                                 if (isRemove == false) {
-                                    _info.raw[key2] = value;
-                                    resolve(utils.deepCopy(_info.raw[key2]));
+                                    if (isPath != false) {
+                                        _info.raw = _this.constructObj(_info.raw, key2, utils.deepCopy(value));
+                                        resolve(utils.deepCopy(value));
+                                    }
+                                    else {
+                                        if (utils.notNull(_info.raw)) {
+                                            _info.raw[key2] = utils.deepCopy(value);
+                                            resolve(utils.deepCopy(value));
+                                        }
+                                        else
+                                            reject(-10);
+                                    }
                                 }
                                 else {
                                     delete _info.raw[key2];
                                     resolve(0);
                                 }
+                            else {
+                                if (isRemove == false) {
+                                    _info.raw = utils.deepCopy(value);
+                                    resolve(utils.deepCopy(_info.raw));
+                                }
+                                else {
+                                    delete _info.raw;
+                                    resolve(0);
+                                }
                             }
-                            else
-                                reject(-10);
                         }
-                        event.emit('dataChanged', { action: 'renew', id: config.id, data: utils.deepCopy(_info), isRefresh: true });
+                        event.emit('dataChanged', {
+                            action: 'renew',
+                            id: config.id,
+                            data: utils.deepCopy(_info),
+                            isRefresh: true
+                        });
                     }
                     else {
                         reject(-2);
@@ -830,6 +887,35 @@ var DataPool = (function () {
                 }
             });
         };
+        var readByPath = function (key, refresh) {
+            return new Promise(function (resolve, reject) {
+                if (checkValid() == false) {
+                    reject(-12);
+                    return;
+                }
+                refresh = utils.notBlankStr(refresh) ? refresh : false;
+                //console.log(configs)
+                var m = utils.simple_array_filter(_this.infos, 'id', id);
+                if ((!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) || refresh == true) {
+                    _this._handler(id, key, resolve, reject, 'raw', true);
+                }
+                else {
+                    if (utils.notNull(key)) {
+                        var result = _this.parseByPath(m[0].raw, key);
+                        if (result !== undefined)
+                            resolve(utils.deepCopy(result));
+                        else
+                            reject(-10);
+                    }
+                    else {
+                        if (utils.notNull(m[0].raw))
+                            resolve(utils.deepCopy(m[0].raw));
+                        else
+                            reject(-9);
+                    }
+                }
+            });
+        };
         var write = function (key, value) {
             return new Promise(function (resolve, reject) {
                 if (checkValid() == false) {
@@ -844,7 +930,12 @@ var DataPool = (function () {
                     else {
                         if (utils.notNull(m[0].info)) {
                             m[0].info[key] = value;
-                            _this.event.emit('dataChanged', { action: 'renew', id: id, data: utils.deepCopy(m[0]), isRefresh: false });
+                            _this.event.emit('dataChanged', {
+                                action: 'renew',
+                                id: id,
+                                data: utils.deepCopy(m[0]),
+                                isRefresh: false
+                            });
                             resolve(utils.deepCopy(m[0].info[key]));
                         }
                         else
@@ -861,24 +952,69 @@ var DataPool = (function () {
                     reject(-12);
                     return;
                 }
-                if (utils.notNull(key)) {
-                    var m = utils.simple_array_filter(_this.infos, 'id', id);
-                    if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
-                        _this._handler2(id, key, value, resolve, reject, false, 'raw');
-                    }
-                    else {
+                //if (utils.notNull(key)) {
+                var m = utils.simple_array_filter(_this.infos, 'id', id);
+                if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
+                    _this._handler2(id, key, value, resolve, reject, false, 'raw');
+                }
+                else {
+                    if (utils.notNull(key))
                         if (utils.notNull(m[0].raw)) {
-                            m[0].raw[key] = value;
-                            _this.event.emit('dataChanged', { action: 'renew', id: id, data: utils.deepCopy(m[0]), isRefresh: false });
+                            m[0].raw[key] = utils.deepCopy(value);
+                            _this.event.emit('dataChanged', {
+                                action: 'renew',
+                                id: id,
+                                data: utils.deepCopy(m[0]),
+                                isRefresh: false
+                            });
                             //alert(321)
                             resolve(utils.deepCopy(m[0].raw[key]));
                         }
                         else
                             reject(-10);
+                    else {
+                        m[0].raw = utils.deepCopy(value);
+                        resolve(utils.deepCopy(m[0].raw));
                     }
                 }
-                else
-                    reject(-8);
+                // }
+                // else
+                //     reject(-8)
+            });
+        };
+        var writeByPath = function (key, value) {
+            return new Promise(function (resolve, reject) {
+                if (checkValid() == false) {
+                    reject(-12);
+                    return;
+                }
+                //if (utils.notNull(key)) {
+                var m = utils.simple_array_filter(_this.infos, 'id', id);
+                if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
+                    _this._handler2(id, key, value, resolve, reject, false, 'raw', true);
+                }
+                else {
+                    if (utils.notNull(key)) {
+                        //if (utils.notNull(m[0].raw)) {
+                        m[0].raw = _this.constructObj(m[0].raw, key, utils.deepCopy(value));
+                        //m[0].raw[key] = this.utils.deepCopy(value);
+                        _this.event.emit('dataChanged', {
+                            action: 'renew',
+                            id: id,
+                            data: utils.deepCopy(m[0]),
+                            isRefresh: false
+                        });
+                        //alert(321)
+                        resolve(utils.deepCopy(value));
+                    }
+                    else {
+                        m[0].raw = _this.utils.deepCopy(value);
+                        resolve(utils.deepCopy(m[0].raw));
+                    }
+                }
+                // }
+                // else
+                //     reject(-8)
             });
         };
         var remove = function (key) {
@@ -895,7 +1031,12 @@ var DataPool = (function () {
                     else {
                         if (utils.notNull(m[0].info)) {
                             delete m[0].info[key];
-                            _this.event.emit('dataChanged', { action: 'renew', id: id, data: utils.deepCopy(m[0]), isRefresh: false });
+                            _this.event.emit('dataChanged', {
+                                action: 'renew',
+                                id: id,
+                                data: utils.deepCopy(m[0]),
+                                isRefresh: false
+                            });
                             resolve(0);
                         }
                         else
@@ -920,7 +1061,12 @@ var DataPool = (function () {
                     else {
                         if (utils.notNull(m[0].raw)) {
                             delete m[0].raw[key];
-                            _this.event.emit('dataChanged', { action: 'renew', id: id, data: utils.deepCopy(m[0]), isRefresh: false });
+                            _this.event.emit('dataChanged', {
+                                action: 'renew',
+                                id: id,
+                                data: utils.deepCopy(m[0]),
+                                isRefresh: false
+                            });
                             resolve(0);
                         }
                         else
@@ -1112,7 +1258,12 @@ var DataPool = (function () {
                             };
                             infos.push(_info);
                             resolve(utils.deepCopy(_info));
-                            event.emit('dataChanged', { action: 'renew', id: config.id, data: utils.deepCopy(_info), isRefresh: true });
+                            event.emit('dataChanged', {
+                                action: 'renew',
+                                id: config.id,
+                                data: utils.deepCopy(_info),
+                                isRefresh: true
+                            });
                         }
                         else {
                             reject(-2);
@@ -1185,14 +1336,101 @@ var DataPool = (function () {
         return {
             //read: read.bind(this),
             read: readRaw.bind(this),
+            readByPath: readByPath.bind(this),
             //write: write.bind(this),
             write: writeRaw.bind(this),
+            writeByPath: writeByPath.bind(this),
             //remove: remove.bind(this),
             remove: removeRaw.bind(this),
             refresh: refresh.bind(this),
             onChange: onChange.bind(this),
             checkValid: checkValid.bind(this)
         };
+    };
+    DataPool.prototype.constructObj = function (obj, path, value) {
+        var paths = path == null ? [] : path.split('.'), index, index2, isArray, isArray2, first = true, org;
+        if (paths.length > 0) {
+            // if (paths[0].substr(0, 1) === '[' && paths[0].substr(paths[0].length - 1) === ']') {
+            //   index = parseInt(paths[0].substr(1, paths[0].length - 2));
+            //   isArray = true
+            // }
+            // else {
+            //   index = paths[0];
+            //   isArray = false
+            // }
+            for (var d = 0; d < paths.length; ++d) {
+                index2 = index;
+                isArray2 = isArray;
+                if (paths[d].substr(0, 1) === '[' && paths[d].substr(paths[d].length - 1) === ']') {
+                    index = parseInt(paths[d].substr(1, paths[d].length - 2));
+                    isArray = true;
+                }
+                else {
+                    index = paths[d];
+                    isArray = false;
+                }
+                if (d == 0) {
+                    if (isArray) {
+                        if (!(obj instanceof Array))
+                            obj = [];
+                        if (obj.length <= index) {
+                            var _l = obj.length;
+                            for (var k = 0; k <= index - _l; ++k) {
+                                obj[obj.length] = null;
+                            }
+                        }
+                    }
+                    else if (typeof obj != 'object' || obj == null || obj instanceof Array) {
+                        obj = {};
+                    }
+                    org = obj;
+                }
+                else {
+                    if (isArray) {
+                        if (!(obj[index2] instanceof Array))
+                            obj[index2] = [];
+                        if (obj[index2].length <= index) {
+                            var _l = obj[index2].length;
+                            for (var k = 0; k <= index - _l; ++k) {
+                                obj[index2][obj[index2].length] = null;
+                            }
+                            obj[index2][obj[index2].length - 1] = isArray ? [] : {};
+                        }
+                    }
+                    else if (typeof obj[index2] != 'object' || obj[index2] == null || (obj[index2] instanceof Array)) {
+                        obj[index2] = {};
+                    }
+                    //alert(JSON.stringify(obj)+index2)
+                    obj = obj[index2];
+                }
+                //alert(JSON.stringify(obj))
+                if (d == paths.length - 1) {
+                    obj[index] = value;
+                }
+            }
+        }
+        else
+            org = value;
+        return org;
+    };
+    DataPool.prototype.parseByPath = function (obj, path) {
+        if (path === void 0) { path = null; }
+        if (obj == null)
+            return undefined;
+        var paths = path == null ? [] : path.split('.'), index;
+        for (var d in paths) {
+            if (paths[d].substr(0, 1) === '[' && paths[d].substr(paths[d].length - 1) === ']')
+                index = paths[d].substr(1, paths[d].length - 2);
+            else
+                index = paths[d];
+            if (typeof obj == 'object' && obj[index] !== undefined)
+                obj = obj[index];
+            else {
+                obj = undefined;
+                break;
+            }
+        }
+        return obj;
     };
     DataPool.prototype.refresh = function () {
         for (var c in this.infos) {
