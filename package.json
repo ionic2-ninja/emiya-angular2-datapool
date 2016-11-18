@@ -1,6 +1,6 @@
 {
   "name": "emiya-angular2-datapool",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "An datapool for angular2",
   "main": "index.d.ts",
   "scripts": {

@@ -74,21 +74,21 @@ constructor(platform: Platform, datapool: DataPool,) {
       //datapool 1 with fetching data from local variable/function/promise
       var config1 = {
         id: '1',
-        localData: {abc: 123},
+        localData: {abc: 123,list:[{id:0},{id:1}]},
       }
       
       //datapool 2 with fetching data from function
       var config2 = {
         id: '2',
-        localData: ()=>{return {abc: 123}},
+        localData: ()=>{return {abc: 123,list:[{id:0},{id:1}]}},
       }
       
       //datapool 3 with fetching data from promise
       var config3 = {
         id: '3',
-        localData: new Promise((resolve,reject)=>{resolve({{abc: 123}})}),
+        localData: new Promise((resolve,reject)=>{resolve({abc: 123,list:[{id:0},{id:1}]})}),
         //or equal to
-        localData: ()=>{return new Promise((resolve,reject)=>{resolve({{abc: 123}})})},
+        localData: ()=>{return new Promise((resolve,reject)=>{resolve({abc: 123,list:[{id:0},{id:1}]})})},
       }
       
       
@@ -99,19 +99,22 @@ constructor(platform: Platform, datapool: DataPool,) {
       datapool.load(config3)
       
       
-      //get datapool instance for 0(the id which you specify in config0.id)
-      let datapool0=datapool.request('0')  
+      //get datapool instance for 1(the id which you specify in config0.id)
+      let datapool0=datapool.request('1')  
       
       //read data from datapool
       datapool0.read('abc').then((data)=>{do something}).catch((code)=>{do something})
       datapool0.read().then((data)=>{do something}).catch((code)=>{do something})  //this will return all data to you
+      datapool0.readByPath('list.[0].id').then((data)=>{do something}).catch((code)=>{do something}) //return 0 from object:{abc: 123,list:[{id:0},{id:1}]}
       
       //write data to datapool
-      datapool0.write('abc0',{id:123})   //add new data abc0 to datapool with value {id:123} and then you can read it later
+      datapool0.write('abc0',{id:123})   //add new data abc0 to datapool with value {id:123} and then you can read it later,retrun promise
+      datapool0.writeByPath('list.[2]',{id:123}) //new data will be {abc: 123,list:[{id:0},{id:1},{id:123}]}
       
       //remove data from datapool
       datapool0.remove('abc0')
-      datapool0.remove()  //this will remove all data
+      datapool0.remove()  //this will remove all data,return promise
+      datapool0.removeByPath('list.[1]')  //new data will be {abc: 123,list:[{id:0}]}
       
       //force refresh datapool(re-fetch data from source)
       datapool0.refresh()

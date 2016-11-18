@@ -757,8 +757,23 @@ var DataPool = (function () {
                                     }
                                 }
                                 else {
-                                    delete _info.raw[key2];
-                                    resolve(0);
+                                    if (isPath != false) {
+                                        var result = _this.deleteObj(_info.raw, key2);
+                                        if (result !== false) {
+                                            _info.raw = result;
+                                            resolve(0);
+                                        }
+                                        else
+                                            reject(-10);
+                                    }
+                                    else {
+                                        if (utils.notNull(_info.raw) && typeof _info.raw == 'object' && _info.raw != null) {
+                                            delete _info.raw[key2];
+                                            resolve(0);
+                                        }
+                                        else
+                                            reject(-10);
+                                    }
                                 }
                             else {
                                 if (isRemove == false) {
@@ -766,7 +781,7 @@ var DataPool = (function () {
                                     resolve(utils.deepCopy(_info.raw));
                                 }
                                 else {
-                                    delete _info.raw;
+                                    _info.raw = null;
                                     resolve(0);
                                 }
                             }
@@ -1053,13 +1068,14 @@ var DataPool = (function () {
                     reject(-12);
                     return;
                 }
-                if (utils.notNull(key)) {
-                    var m = utils.simple_array_filter(_this.infos, 'id', id);
-                    if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
-                        _this._handler2(id, key, null, resolve, reject, true, 'raw');
-                    }
-                    else {
-                        if (utils.notNull(m[0].raw)) {
+                //if (utils.notNull(key)) {
+                var m = utils.simple_array_filter(_this.infos, 'id', id);
+                if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
+                    _this._handler2(id, key, null, resolve, reject, true, 'raw');
+                }
+                else {
+                    if (utils.notNull(key))
+                        if (utils.notNull(m[0].raw) && typeof m[0].raw == 'object' && m[0].raw != null) {
                             delete m[0].raw[key];
                             _this.event.emit('dataChanged', {
                                 action: 'renew',
@@ -1071,10 +1087,63 @@ var DataPool = (function () {
                         }
                         else
                             reject(-10);
+                    else {
+                        m[0].raw = null;
+                        _this.event.emit('dataChanged', {
+                            action: 'renew',
+                            id: id,
+                            data: utils.deepCopy(m[0]),
+                            isRefresh: false
+                        });
+                        resolve(0);
                     }
                 }
-                else
-                    reject(-8);
+                // }
+                // else
+                //     reject(-8)
+            });
+        };
+        var removeByPath = function (key) {
+            return new Promise(function (resolve, reject) {
+                if (checkValid() == false) {
+                    reject(-12);
+                    return;
+                }
+                //if (utils.notNull(key)) {
+                var m = utils.simple_array_filter(_this.infos, 'id', id);
+                if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
+                    _this._handler2(id, key, null, resolve, reject, true, 'raw', true);
+                }
+                else {
+                    if (utils.notNull(key)) {
+                        var result = _this.deleteObj(m[0].raw, key);
+                        if (result !== false) {
+                            m[0].raw = result;
+                            _this.event.emit('dataChanged', {
+                                action: 'renew',
+                                id: id,
+                                data: utils.deepCopy(m[0]),
+                                isRefresh: false
+                            });
+                            resolve(0);
+                        }
+                        else
+                            reject(-10);
+                    }
+                    else {
+                        m[0].raw = null;
+                        _this.event.emit('dataChanged', {
+                            action: 'renew',
+                            id: id,
+                            data: utils.deepCopy(m[0]),
+                            isRefresh: false
+                        });
+                        resolve(0);
+                    }
+                }
+                // }
+                // else
+                //     reject(-8)
             });
         };
         var refresh = function () {
@@ -1342,6 +1411,7 @@ var DataPool = (function () {
             writeByPath: writeByPath.bind(this),
             //remove: remove.bind(this),
             remove: removeRaw.bind(this),
+            removeByPath: removeByPath.bind(this),
             refresh: refresh.bind(this),
             onChange: onChange.bind(this),
             checkValid: checkValid.bind(this)
@@ -1412,6 +1482,59 @@ var DataPool = (function () {
         else
             org = value;
         return org;
+    };
+    DataPool.prototype.deleteObj = function (obj, path) {
+        if (path === void 0) { path = null; }
+        var paths = path == null ? [] : path.split('.'), index, index2, isArray, isArray2, first = true, org;
+        if (paths.length > 0) {
+            for (var d = 0; d < paths.length; ++d) {
+                index2 = index;
+                isArray2 = isArray;
+                if (paths[d].substr(0, 1) === '[' && paths[d].substr(paths[d].length - 1) === ']') {
+                    index = parseInt(paths[d].substr(1, paths[d].length - 2));
+                    isArray = true;
+                }
+                else {
+                    index = paths[d];
+                    isArray = false;
+                }
+                if (d == 0) {
+                    if (isArray) {
+                        if (!(obj instanceof Array))
+                            return false;
+                        if (obj.length <= index)
+                            return false;
+                    }
+                    else if (typeof obj != 'object' || obj == null || obj instanceof Array)
+                        return false;
+                    org = obj;
+                }
+                else {
+                    if (isArray) {
+                        if (!(obj[index2] instanceof Array))
+                            return false;
+                        if (obj[index2].length <= index)
+                            return false;
+                    }
+                    else if (typeof obj[index2] != 'object' || obj[index2] == null || (obj[index2] instanceof Array))
+                        return false;
+                    //alert(JSON.stringify(obj)+index2)
+                    obj = obj[index2];
+                }
+                //alert(JSON.stringify(obj))
+                if (d == paths.length - 1) {
+                    if (isArray)
+                        obj.splice(index, 1);
+                    else
+                        delete obj[index];
+                    return org;
+                }
+            }
+        }
+        else {
+            org = null;
+            return org;
+        }
     };
     DataPool.prototype.parseByPath = function (obj, path) {
         if (path === void 0) { path = null; }
