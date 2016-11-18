@@ -15,7 +15,7 @@ npm install --save emiya-angular2-datapool
 ### Usage
 
 ```
-import {DataPool} from "emiya-angular";
+import {DataPool,DataPoolHandle} from "emiya-angular";
 
 @Component({
   template: `<ion-nav></ion-nav>`

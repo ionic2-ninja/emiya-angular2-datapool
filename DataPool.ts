@@ -12,7 +12,7 @@ const constants = {
     httpRequestTimeout: 15000
 };
 
-interface DataPoolInstance {
+export interface DataPoolHandle {
     read: Function,
     readByPath: Function,
     write: Function,
@@ -913,7 +913,7 @@ export class DataPool {
             reject(-7);
     }
 
-    public request(_id): DataPoolInstance { // return DataPoolInstance, but typescript do not allow
+    public request(_id): DataPoolHandle { // return DataPoolInstance, but typescript do not allow
         var id = _id;
         var _m = this.utils.simple_array_filter(this.configs, 'id', id);
         if (_m.length <= 0)
