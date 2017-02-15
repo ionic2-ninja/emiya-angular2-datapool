@@ -5,6 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+exports.__esModule = true;
 /**
  * Created by Lee on 2016/9/7.
  */
@@ -244,6 +245,7 @@ var DataPool = (function () {
                     if (_data) {
                         if (m && m.length > 0) {
                             infos.splice(infos.indexOf(m[0]), 1);
+                            //console.log(2,infos)
                         }
                         var info = {};
                         if (utils.notBlankStrAndObj(config.transform)) {
@@ -266,6 +268,7 @@ var DataPool = (function () {
                                     if (utils.notNull(msg)) {
                                         info[r] = msg;
                                     }
+                                    //console.log(info)
                                 }
                             }
                             else {
@@ -274,6 +277,7 @@ var DataPool = (function () {
                         }
                         if (m && m.length > 0) {
                             utils.mergeObject(info, m[0].info);
+                            //utils.mergeObject(_data, m[0].raw);
                         }
                         if (enable == true) {
                             var _info = {
@@ -318,6 +322,7 @@ var DataPool = (function () {
                     event.emit('dataChanged', { action: 'delete', id: config.id });
                     break;
                 }
+                //console.log(infos)
             }
         }
     };
@@ -484,6 +489,7 @@ var DataPool = (function () {
                     }
                     if (m && m.length > 0) {
                         utils.mergeObject(info, m[0].info);
+                        //utils.mergeObject(_data, m[0].raw);
                     }
                     if (enable == true) {
                         var _info = {
@@ -715,6 +721,7 @@ var DataPool = (function () {
                     }
                     if (m && m.length > 0) {
                         utils.mergeObject(info, m[0].info);
+                        //utils.mergeObject(_data, m[0].raw);
                     }
                     if (enable == true) {
                         var _info = {
@@ -755,6 +762,7 @@ var DataPool = (function () {
                                         else
                                             reject(-10);
                                     }
+                                    // _info.raw[key2] = utils.deepCopy(value);
                                 }
                                 else {
                                     if (isPath != false) {
@@ -857,6 +865,7 @@ var DataPool = (function () {
                 var m = utils.simple_array_filter(_this.infos, 'id', id);
                 if ((!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) || refresh == true) {
                     _this._handler(id, key, resolve, reject, 'info');
+                    //alert(123)
                 }
                 else {
                     if (utils.notNull(key)) {
@@ -885,6 +894,7 @@ var DataPool = (function () {
                 var m = utils.simple_array_filter(_this.infos, 'id', id);
                 if ((!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) || refresh == true) {
                     _this._handler(id, key, resolve, reject, 'raw');
+                    //alert(123)
                 }
                 else {
                     if (utils.notNull(key)) {
@@ -913,6 +923,7 @@ var DataPool = (function () {
                 var m = utils.simple_array_filter(_this.infos, 'id', id);
                 if ((!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) || refresh == true) {
                     _this._handler(id, key, resolve, reject, 'raw', true);
+                    //alert(123)
                 }
                 else {
                     if (utils.notNull(key)) {
@@ -941,6 +952,7 @@ var DataPool = (function () {
                     var m = utils.simple_array_filter(_this.infos, 'id', id);
                     if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
                         _this._handler2(id, key, value, resolve, reject, false, 'info');
+                        //alert(123)
                     }
                     else {
                         if (utils.notNull(m[0].info)) {
@@ -1021,6 +1033,9 @@ var DataPool = (function () {
                         });
                         //alert(321)
                         resolve(utils.deepCopy(value));
+                        // }
+                        // else
+                        //     reject(-10);
                     }
                     else {
                         m[0].raw = _this.utils.deepCopy(value);
@@ -1042,6 +1057,7 @@ var DataPool = (function () {
                     var m = utils.simple_array_filter(_this.infos, 'id', id);
                     if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
                         _this._handler2(id, key, null, resolve, reject, true, 'info');
+                        //alert(123)
                     }
                     else {
                         if (utils.notNull(m[0].info)) {
@@ -1072,6 +1088,7 @@ var DataPool = (function () {
                 var m = utils.simple_array_filter(_this.infos, 'id', id);
                 if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
                     _this._handler2(id, key, null, resolve, reject, true, 'raw');
+                    //alert(123)
                 }
                 else {
                     if (utils.notNull(key))
@@ -1113,6 +1130,7 @@ var DataPool = (function () {
                 var m = utils.simple_array_filter(_this.infos, 'id', id);
                 if (!m || m.length <= 0 || (m[0].period >= 0 && new Date().getTime() - m[0].timestamp > m[0].period * 1000)) {
                     _this._handler2(id, key, null, resolve, reject, true, 'raw', true);
+                    //alert(123)
                 }
                 else {
                     if (utils.notNull(key)) {
@@ -1316,6 +1334,7 @@ var DataPool = (function () {
                         }
                         if (m && m.length > 0) {
                             utils.mergeObject(info, m[0].info);
+                            //utils.mergeObject(_data, m[0].raw);
                         }
                         if (enable == true) {
                             var _info = {
@@ -1383,6 +1402,14 @@ var DataPool = (function () {
                         d = null;
                     }
                 };
+                // c = scope.subscribe('ionViewDidUnload', ()=> {
+                //   if (d) {
+                //     d.unsubscribe();
+                //     d = null;
+                //     c.unsubscribe();
+                //     c = null;
+                //   }
+                // })
             }
             if (immediate != false) {
                 try {
@@ -1390,6 +1417,7 @@ var DataPool = (function () {
                 }
                 catch (e) {
                 }
+                //refresh();
             }
             return function () {
                 if (d) {
@@ -1478,6 +1506,7 @@ var DataPool = (function () {
                     obj[index] = value;
                 }
             }
+            //obj[paths[paths.length - 1]] = value
         }
         else
             org = value;
@@ -1530,6 +1559,7 @@ var DataPool = (function () {
                     return org;
                 }
             }
+            //obj[paths[paths.length - 1]] = value
         }
         else {
             org = null;
@@ -1583,6 +1613,14 @@ var DataPool = (function () {
                     d = null;
                 }
             };
+            // c = scope.subscribe('ionViewDidUnload', ()=> {
+            //   if (d) {
+            //     d.unsubscribe();
+            //     d = null;
+            //     c.unsubscribe();
+            //     c = null;
+            //   }
+            // })
         }
         if (immediate != false) {
             try {
@@ -1591,6 +1629,7 @@ var DataPool = (function () {
             }
             catch (e) {
             }
+            //refresh();
         }
         return function () {
             if (d) {
@@ -1615,3 +1654,4 @@ DataPool = __decorate([
     core_1.Injectable()
 ], DataPool);
 exports.DataPool = DataPool;
+//# sourceMappingURL=DataPool.js.map
